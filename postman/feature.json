@@ -1,0 +1,1417 @@
+{
+  "info": {
+    "_postman_id": "9039a5df-2fea-45ce-ab31-c11940976a44",
+    "name": "Feature Comments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52835777",
+    "_collection_link": "https://go.postman.co/collection/52835777-9039a5df-2fea-45ce-ab31-c11940976a44?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Создание пользователя",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_USER\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"User Name\",\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/admin/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Создание категории",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_CATEGORY\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"Category {{$randomWord}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/admin/categories",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "categories"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Создание события",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_EVENT\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"annotation\": \"Event annotation text\",\r\n    \"category\": {{ID_CATEGORY}},\r\n    \"description\": \"Event description text\",\r\n    \"eventDate\": \"2036-06-01 15:30:00\",\r\n    \"location\": {\r\n        \"lat\": 0,\r\n        \"lon\": 0\r\n    },\r\n    \"participantLimit\": 0,\r\n    \"title\": \"Event title text\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/events",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "events"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Создание комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = null\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(null);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_COMMENT\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/events/{{ID_EVENT}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "events",
+            "{{ID_EVENT}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Создание администратора",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_ADMIN\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"Admin Name\",\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/admin/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Публикация комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = Comment Text\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(\"Comment Text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле state\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"state\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле state = APPROVED\", function () {\r",
+              "    pm.expect(pm.response.json().state).eql(\"APPROVED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderatorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderatorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderationReason\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderationReason\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "{{ID_ADMIN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/{{ID_COMMENT}}?action=APPROVE",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments",
+            "{{ID_COMMENT}}"
+          ],
+          "query": [
+            {
+              "key": "action",
+              "value": "APPROVE"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Обновление комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = Comment Text\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(\"Comment Text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "{{ID_ADMIN}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/comments/{{ID_COMMENT}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "comments",
+            "{{ID_COMMENT}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Публикация обновлённого комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = Comment Text Update\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(\"Comment Text Update\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле state\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"state\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле state = APPROVED\", function () {\r",
+              "    pm.expect(pm.response.json().state).eql(\"APPROVED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderatorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderatorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderationReason\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderationReason\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "{{ID_ADMIN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/{{ID_COMMENT}}?action=APPROVE",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments",
+            "{{ID_COMMENT}}"
+          ],
+          "query": [
+            {
+              "key": "action",
+              "value": "APPROVE"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Создание второго комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = null\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(null);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"ID_COMMENT_SECOND\", pm.response.json().id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/events/{{ID_EVENT}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "events",
+            "{{ID_EVENT}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Отклонение второго комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле id\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"id\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле text\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"text\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле text = null\", function () {\r",
+              "    pm.expect(pm.response.json().text).eql(null);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле created\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"created\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле updated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"updated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле eventId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"eventId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле authorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"authorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле state\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"state\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Поле state = REJECTED\", function () {\r",
+              "    pm.expect(pm.response.json().state).eql(\"REJECTED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderatorId\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderatorId\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderated\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderated\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле moderationReason\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"moderationReason\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "{{ID_ADMIN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/{{ID_COMMENT_SECOND}}?action=REJECT",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments",
+            "{{ID_COMMENT_SECOND}}"
+          ],
+          "query": [
+            {
+              "key": "action",
+              "value": "REJECT"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев первого пользователя",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Длина массива = 2\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(2);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "2",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев администратора",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Массив пустой\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "2",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_ADMIN}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_ADMIN}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев по критериям",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Длина массива = 1\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(1);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "2",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/admin/comments?text=Comment Text Update",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments"
+          ],
+          "query": [
+            {
+              "key": "text",
+              "value": "Comment Text Update"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев по критериям с несуществующим текстом",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Массив пустой\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "2",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/admin/comments?text=Absent Text",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments"
+          ],
+          "query": [
+            {
+              "key": "text",
+              "value": "Absent Text"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Удаление собственного комментария",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 204\", function () {\r",
+              "    pm.response.to.have.status(204);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "2",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/comments/{{ID_COMMENT}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "comments",
+            "{{ID_COMMENT}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев первого пользователя после удаления",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Длина массива = 1\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(1);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Удаление комментария другим пользователем",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 409\", function () {\r",
+              "    pm.response.to.have.status(409);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле message\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"message\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле reason\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"reason\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле status\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"status\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"В ответе есть поле timestamp\", function () {\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"timestamp\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"text\": \"Comment Text Update\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_ADMIN}}/comments/{{ID_COMMENT_SECOND}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_ADMIN}}",
+            "comments",
+            "{{ID_COMMENT_SECOND}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Удаление комментария администратором",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 204\", function () {\r",
+              "    pm.response.to.have.status(204);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-EWV-Admin-Id",
+            "value": "{{ID_ADMIN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/{{ID_COMMENT_SECOND}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "admin",
+            "comments",
+            "{{ID_COMMENT_SECOND}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Получение всех комментариев первого пользователя после удаления всех комментариев",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Статус ответа 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Значение — массив\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Массив пустой\", () => {\r",
+              "    pm.expect(pm.response.json()).to.have.length(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/users/{{ID_USER}}/comments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "users",
+            "{{ID_USER}}",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "ID_USER",
+      "value": ""
+    },
+    {
+      "key": "ID_CATEGORY",
+      "value": ""
+    },
+    {
+      "key": "ID_EVENT",
+      "value": ""
+    },
+    {
+      "key": "ID_COMMENT",
+      "value": ""
+    },
+    {
+      "key": "ID_ADMIN",
+      "value": ""
+    },
+    {
+      "key": "ID_COMMENT_SECOND",
+      "value": ""
+    }
+  ]
+}
