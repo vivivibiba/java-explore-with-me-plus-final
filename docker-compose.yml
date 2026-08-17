@@ -28,50 +28,70 @@ services:
       retries: 30
       start_period: 5s
 
-  gateway-server:
-    build: infra/gateway-server
-    image: ewm-gateway-server
-    container_name: ewm-gateway-server
-    ports:
-      - "8080:8080"
-    depends_on:
-      discovery-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      main-service:
-        condition: service_started
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-
-  main-service:
-    build: core/main-service
-    image: ewm-main-service
-    container_name: ewm-main-service
-    depends_on:
-      ewm-db:
-        condition: service_healthy
-      discovery-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      stats-server:
-        condition: service_started
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm
-      - SPRING_DATASOURCE_USERNAME=ewm
-      - SPRING_DATASOURCE_PASSWORD=ewm
-
-  ewm-db:
+  users-db:
     image: postgres:16.1
-    container_name: ewm-db
-    ports:
-      - "6542:5432"
+    container_name: ewm-users-db
+    ports: ["6542:5432"]
     environment:
-      - POSTGRES_PASSWORD=ewm
-      - POSTGRES_USER=ewm
-      - POSTGRES_DB=ewm
+      POSTGRES_PASSWORD: users
+      POSTGRES_USER: users
+      POSTGRES_DB: users
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  events-db:
+    image: postgres:16.1
+    container_name: ewm-events-db
+    ports: ["6543:5432"]
+    environment:
+      POSTGRES_PASSWORD: events
+      POSTGRES_USER: events
+      POSTGRES_DB: events
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  requests-db:
+    image: postgres:16.1
+    container_name: ewm-requests-db
+    ports: ["6544:5432"]
+    environment:
+      POSTGRES_PASSWORD: requests
+      POSTGRES_USER: requests
+      POSTGRES_DB: requests
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  comments-db:
+    image: postgres:16.1
+    container_name: ewm-comments-db
+    ports: ["6545:5432"]
+    environment:
+      POSTGRES_PASSWORD: comments
+      POSTGRES_USER: comments
+      POSTGRES_DB: comments
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  stats-db:
+    image: postgres:16.1
+    container_name: stats-db
+    ports: ["6541:5432"]
+    environment:
+      POSTGRES_PASSWORD: stats
+      POSTGRES_USER: stats
+      POSTGRES_DB: stats
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -95,17 +115,106 @@ services:
       - SPRING_DATASOURCE_USERNAME=stats
       - SPRING_DATASOURCE_PASSWORD=stats
 
-  stats-db:
-    image: postgres:16.1
-    container_name: stats-db
-    ports:
-      - "6541:5432"
+  user-service:
+    build: core/user-service
+    image: ewm-user-service
+    container_name: ewm-user-service
+    depends_on:
+      users-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     environment:
-      - POSTGRES_PASSWORD=stats
-      - POSTGRES_USER=stats
-      - POSTGRES_DB=stats
-    healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
-      interval: 5s
-      retries: 10
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://users-db:5432/users
+      - SPRING_DATASOURCE_USERNAME=users
+      - SPRING_DATASOURCE_PASSWORD=users
+
+  event-service:
+    build: core/event-service
+    image: ewm-event-service
+    container_name: ewm-event-service
+    depends_on:
+      events-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://events-db:5432/events
+      - SPRING_DATASOURCE_USERNAME=events
+      - SPRING_DATASOURCE_PASSWORD=events
+
+  request-service:
+    build: core/request-service
+    image: ewm-request-service
+    container_name: ewm-request-service
+    depends_on:
+      requests-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://requests-db:5432/requests
+      - SPRING_DATASOURCE_USERNAME=requests
+      - SPRING_DATASOURCE_PASSWORD=requests
+
+  comment-service:
+    build: core/comment-service
+    image: ewm-comment-service
+    container_name: ewm-comment-service
+    depends_on:
+      comments-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://comments-db:5432/comments
+      - SPRING_DATASOURCE_USERNAME=comments
+      - SPRING_DATASOURCE_PASSWORD=comments
+
+  main-service:
+    build: core/main-service
+    image: ewm-main-service
+    container_name: ewm-main-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+
+  gateway-server:
+    build: infra/gateway-server
+    image: ewm-gateway-server
+    container_name: ewm-gateway-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      request-service:
+        condition: service_started
+      comment-service:
+        condition: service_started
+      stats-server:
+        condition: service_started
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
