@@ -2,6 +2,7 @@ package ru.practicum.explorewithme.exception.handler;
 
 import feign.FeignException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -15,6 +16,7 @@ import ru.practicum.explorewithme.exception.*;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 @SuppressWarnings("unused")
 public class ErrorHandler {
@@ -84,6 +86,12 @@ public class ErrorHandler {
 
     @ExceptionHandler
     public ResponseEntity<?> downstreamServiceError(FeignException e) {
+        log.warn(
+                "Downstream service error: status={}, message={}",
+                e.status(),
+                e.getMessage()
+        );
+
         if (e.status() >= 400 && e.status() < 600 && !e.contentUTF8().isBlank()) {
             return ResponseEntity.status(e.status())
                     .contentType(MediaType.APPLICATION_JSON)
@@ -98,6 +106,8 @@ public class ErrorHandler {
 
     @ExceptionHandler
     public ResponseEntity<ApiError> unexpected(RuntimeException e) {
+        log.error("Unexpected application error", e);
+
         return createErrorResponse(
                 e.getMessage(),
                 "unexpected error",
@@ -111,6 +121,15 @@ public class ErrorHandler {
     }
 
     private ResponseEntity<ApiError> createErrorResponse(String message, String reason, HttpStatus status) {
+        if (status.is4xxClientError()) {
+            log.warn(
+                    "Request error: status={}, reason={}, message={}",
+                    status,
+                    reason,
+                    message
+            );
+        }
+
         return ResponseEntity.status(status).body(
                 new ApiError(
                         message,

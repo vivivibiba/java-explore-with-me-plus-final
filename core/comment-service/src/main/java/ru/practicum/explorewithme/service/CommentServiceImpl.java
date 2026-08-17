@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.practicum.explorewithme.client.EventClient;
 import ru.practicum.explorewithme.client.UserClient;
 import ru.practicum.explorewithme.common.pagination.OffsetPageRequest;
@@ -23,14 +24,15 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CommentServiceImpl extends ServiceBase implements CommentService {
     private final CommentRepository commentRepository;
     private final UserClient userClient;
     private final EventClient eventClient;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommentShortDto> getComments(long eventId, int from, int size) {
         return commentRepository.findByEventIdWithOffset(eventId, from, size).stream()
                 .map(CommentMapper::toCommentShortDto)
@@ -49,41 +51,49 @@ public class CommentServiceImpl extends ServiceBase implements CommentService {
     }
 
     @Override
-    @Transactional
     public CommentDto moderateComment(long adminId, long commentId, ModerationAction action) {
         userClient.getUser(adminId);
-        LocalDateTime now = LocalDateTime.now();
-        Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
-        if (action == ModerationAction.APPROVE) {
-            comment.setText(comment.getTextOnModeration());
-            comment.setUpdated(now);
-            comment.setStatus(CommentStatus.APPROVED);
-        }
-        if (action == ModerationAction.REJECT && comment.getText() == null) {
-            comment.setStatus(CommentStatus.REJECTED);
-        } else if (action == ModerationAction.REJECT) {
-            comment.setStatus(CommentStatus.APPROVED);
-        }
-        comment.setModeratorId(adminId);
-        comment.setModerated(now);
-        comment.setTextOnModeration(null);
-        return CommentMapper.toCommentDto(commentRepository.save(comment));
+
+        return transactionTemplate.execute(transactionStatus -> {
+            LocalDateTime now = LocalDateTime.now();
+            Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
+            if (action == ModerationAction.APPROVE) {
+                comment.setText(comment.getTextOnModeration());
+                comment.setUpdated(now);
+                comment.setStatus(CommentStatus.APPROVED);
+            }
+            if (action == ModerationAction.REJECT && comment.getText() == null) {
+                comment.setStatus(CommentStatus.REJECTED);
+            } else if (action == ModerationAction.REJECT) {
+                comment.setStatus(CommentStatus.APPROVED);
+            }
+            comment.setModeratorId(adminId);
+            comment.setModerated(now);
+            comment.setTextOnModeration(null);
+            return CommentMapper.toCommentDto(commentRepository.save(comment));
+        });
     }
 
     @Override
-    @Transactional
     public void deleteCommentByAdmin(long adminId, long commentId) {
         userClient.getUser(adminId);
-        commentRepository.delete(findEntityIn(commentRepository, commentId, Entities.COMMENT));
+
+        transactionTemplate.executeWithoutResult(transactionStatus ->
+                commentRepository.delete(
+                        findEntityIn(commentRepository, commentId, Entities.COMMENT)
+                )
+        );
     }
 
     @Override
-    @Transactional
     public void deleteCommentByUser(long userId, long commentId) {
         userClient.getUser(userId);
-        Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
-        checkCommentAuthorship(comment, userId);
-        commentRepository.delete(comment);
+
+        transactionTemplate.executeWithoutResult(transactionStatus -> {
+            Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
+            checkCommentAuthorship(comment, userId);
+            commentRepository.delete(comment);
+        });
     }
 
     @Override
@@ -95,27 +105,31 @@ public class CommentServiceImpl extends ServiceBase implements CommentService {
     }
 
     @Override
-    @Transactional
     public CommentShortDto createComment(long userId, long eventId, NewCommentDto body) {
         userClient.getUser(userId);
         eventClient.getEvent(eventId);
-        Comment comment = CommentMapper.toComment(body);
-        comment.setCreated(LocalDateTime.now());
-        comment.setEventId(eventId);
-        comment.setAuthorId(userId);
-        comment.setStatus(CommentStatus.PENDING);
-        return CommentMapper.toCommentShortDto(commentRepository.save(comment));
+
+        return transactionTemplate.execute(transactionStatus -> {
+            Comment comment = CommentMapper.toComment(body);
+            comment.setCreated(LocalDateTime.now());
+            comment.setEventId(eventId);
+            comment.setAuthorId(userId);
+            comment.setStatus(CommentStatus.PENDING);
+            return CommentMapper.toCommentShortDto(commentRepository.save(comment));
+        });
     }
 
     @Override
-    @Transactional
     public CommentShortDto updateComment(long userId, long commentId, UpdateCommentDto body) {
         userClient.getUser(userId);
-        Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
-        checkCommentAuthorship(comment, userId);
-        comment.setTextOnModeration(body.getText());
-        comment.setStatus(CommentStatus.PENDING);
-        return CommentMapper.toCommentShortDto(commentRepository.save(comment));
+
+        return transactionTemplate.execute(transactionStatus -> {
+            Comment comment = findEntityIn(commentRepository, commentId, Entities.COMMENT);
+            checkCommentAuthorship(comment, userId);
+            comment.setTextOnModeration(body.getText());
+            comment.setStatus(CommentStatus.PENDING);
+            return CommentMapper.toCommentShortDto(commentRepository.save(comment));
+        });
     }
 
     private void checkCommentAuthorship(Comment comment, long userId) {

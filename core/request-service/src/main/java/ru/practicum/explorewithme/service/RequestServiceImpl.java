@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.practicum.explorewithme.client.EventClient;
 import ru.practicum.explorewithme.client.UserClient;
 import ru.practicum.explorewithme.dto.event.EventStatus;
@@ -22,14 +23,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class RequestServiceImpl extends ServiceBase implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
+    @Transactional(readOnly = true)
     public List<RequestDto> getRequestsToUsersEvent(long eventId) {
         return requestRepository.findByEventId(eventId).stream().map(this::toDto).toList();
     }
@@ -50,7 +52,6 @@ public class RequestServiceImpl extends ServiceBase implements RequestService {
     }
 
     @Override
-    @Transactional
     public RequestDto create(long userId, long eventId) {
         if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
             throw new DuplicatedDataException(Entities.REQUEST.name(), "eventId and userId", eventId);
@@ -63,12 +64,14 @@ public class RequestServiceImpl extends ServiceBase implements RequestService {
         RequestStatus status = event.getParticipantLimit() == 0 || !event.isRequestModeration()
                 ? RequestStatus.CONFIRMED
                 : RequestStatus.PENDING;
-        Request created = requestRepository.save(Request.builder()
-                .created(LocalDateTime.now())
-                .eventId(eventId)
-                .requesterId(userId)
-                .status(status)
-                .build());
+        Request created = transactionTemplate.execute(transactionStatus ->
+                requestRepository.save(Request.builder()
+                        .created(LocalDateTime.now())
+                        .eventId(eventId)
+                        .requesterId(userId)
+                        .status(status)
+                        .build())
+        );
 
         if (status == RequestStatus.CONFIRMED) {
             eventClient.adjustConfirmedRequests(eventId, 1);
@@ -91,6 +94,7 @@ public class RequestServiceImpl extends ServiceBase implements RequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RequestDto> getUserRequests(long requesterId) {
         return requestRepository.findByRequesterIdOrderByCreatedDesc(requesterId).stream()
                 .map(this::toDto)
