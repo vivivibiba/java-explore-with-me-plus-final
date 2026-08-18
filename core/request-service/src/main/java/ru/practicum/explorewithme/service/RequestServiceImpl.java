@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import ru.practicum.explorewithme.CollectorClient;
+import ru.practicum.explorewithme.UserActionType;
 import ru.practicum.explorewithme.client.EventClient;
 import ru.practicum.explorewithme.client.UserClient;
 import ru.practicum.explorewithme.dto.event.EventStatus;
@@ -28,6 +30,7 @@ public class RequestServiceImpl extends ServiceBase implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final CollectorClient collectorClient;
     private final TransactionTemplate transactionTemplate;
 
     @Override
@@ -73,6 +76,7 @@ public class RequestServiceImpl extends ServiceBase implements RequestService {
                         .build())
         );
 
+        collectorClient.collect(userId, eventId, UserActionType.REGISTER);
         if (status == RequestStatus.CONFIRMED) {
             eventClient.adjustConfirmedRequests(eventId, 1);
         }

@@ -64,6 +64,11 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    public ResponseEntity<ApiError> badRequest(BadRequestException e) {
+        return createErrorResponse(e.getMessage(), "incorrect request", HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ApiError> duplicatedData(DuplicatedDataException e) {
         return createErrorResponse(e.getMessage(), "duplicated data", HttpStatus.CONFLICT);
     }

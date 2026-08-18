@@ -28,6 +28,45 @@ services:
       retries: 30
       start_period: 5s
 
+  kafka:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: ewm-kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  kafka-init-topics:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: ewm-kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      bash -c "
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic stats.user-actions.v1 --partitions 1 --replication-factor 1 &&
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic stats.events-similarity.v1 --partitions 1 --replication-factor 1
+      "
+
   users-db:
     image: postgres:16.1
     container_name: ewm-users-db
@@ -98,6 +137,70 @@ services:
       interval: 5s
       retries: 10
 
+  analyzer-db:
+    image: postgres:16.1
+    container_name: ewm-analyzer-db
+    ports: ["6546:5432"]
+    environment:
+      POSTGRES_PASSWORD: analyzer
+      POSTGRES_USER: analyzer
+      POSTGRES_DB: analyzer
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  collector:
+    build: stats-service/collector
+    image: ewm-collector
+    container_name: ewm-collector
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - COLLECTOR_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+  aggregator:
+    build: stats-service/aggregator
+    image: ewm-aggregator
+    container_name: ewm-aggregator
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - AGGREGATOR_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+  analyzer:
+    build: stats-service/analyzer
+    image: ewm-analyzer
+    container_name: ewm-analyzer
+    depends_on:
+      analyzer-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - ANALYZER_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://analyzer-db:5432/analyzer
+      - SPRING_DATASOURCE_USERNAME=analyzer
+      - SPRING_DATASOURCE_PASSWORD=analyzer
+
   stats-server:
     build: ./stats-service
     image: ewm-stats-server
@@ -143,6 +246,10 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
+      analyzer:
+        condition: service_started
+      collector:
+        condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://events-db:5432/events
@@ -160,6 +267,8 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
+      collector:
+        condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://requests-db:5432/requests

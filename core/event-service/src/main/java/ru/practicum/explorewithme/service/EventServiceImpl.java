@@ -8,8 +8,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import ru.practicum.explorewithme.EventServiceApplication;
-import ru.practicum.explorewithme.StatsClient;
+import ru.practicum.explorewithme.AnalyzerClient;
+import ru.practicum.explorewithme.CollectorClient;
+import ru.practicum.explorewithme.RecommendedEvent;
+import ru.practicum.explorewithme.UserActionType;
 import ru.practicum.explorewithme.client.RequestClient;
 import ru.practicum.explorewithme.client.UserClient;
 import ru.practicum.explorewithme.common.pagination.OffsetPageRequest;
@@ -23,7 +25,6 @@ import ru.practicum.explorewithme.entity.Category;
 import ru.practicum.explorewithme.entity.Event;
 import ru.practicum.explorewithme.entity.LocationEmbeddable;
 import ru.practicum.explorewithme.exception.*;
-import ru.practicum.explorewithme.hit.EndpointHitRequest;
 import ru.practicum.explorewithme.mapper.CategoryMapper;
 import ru.practicum.explorewithme.mapper.EventMapper;
 import ru.practicum.explorewithme.mapper.LocationMapper;
@@ -35,6 +36,9 @@ import ru.practicum.explorewithme.repository.specification.UsersEventSearchSpeci
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +48,8 @@ public class EventServiceImpl extends ServiceBase implements EventService {
     private final CategoryRepository categoryRepository;
     private final UserClient userClient;
     private final RequestClient requestClient;
-    private final StatsClient statsClient;
+    private final AnalyzerClient analyzerClient;
+    private final CollectorClient collectorClient;
     private final TransactionTemplate transactionTemplate;
     private static final int ADMIN_MIN_OFFSET = 1;
 
@@ -58,7 +63,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
             return List.of();
         }
 
-        return getEventsWithStats(events, statsClient);
+        return getEventsWithRatings(events);
     }
 
     @Override
@@ -81,7 +86,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
         );
 
         log.debug("Создано событие {}", createdEvent);
-        EventDto result = getEventsWithStats(List.of(createdEvent), statsClient).getFirst();
+        EventDto result = getEventsWithRatings(List.of(createdEvent)).getFirst();
         log.debug("Событие преобразовано в DTO {}", result);
         return result;
     }
@@ -91,7 +96,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
         log.trace("Инициировано получение события {} пользователем с id {}", eventId, userId);
         Event event = getEventById(eventId, userId);
         log.debug("Получено событие {}", event);
-        return getEventsWithStats(List.of(event), statsClient).getFirst();
+        return getEventsWithRatings(List.of(event)).getFirst();
     }
 
     @Override
@@ -107,7 +112,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
         });
 
         log.debug("Обновлено событие {}", updatedEvent);
-        return getEventsWithStats(List.of(updatedEvent), statsClient).getFirst();
+        return getEventsWithRatings(List.of(updatedEvent)).getFirst();
     }
 
     @Override
@@ -150,12 +155,9 @@ public class EventServiceImpl extends ServiceBase implements EventService {
                                                   boolean onlyAvailable,
                                                   PublicEventSort sort,
                                                   int from,
-                                                  int size,
-                                                  String ip,
-                                                  String uri) {
+                                                  int size) {
         log.trace("Инициировано получение опубликованных событий");
         checkDateRange(rangeStart, rangeEnd);
-        saveHit(ip, uri);
 
         LocalDateTime start = rangeStart;
         if (rangeStart == null && rangeEnd == null) {
@@ -178,9 +180,9 @@ public class EventServiceImpl extends ServiceBase implements EventService {
                 return List.of();
             }
 
-            List<EventShortDto> dtos = getEventsWithStats(events, statsClient).stream()
+            List<EventShortDto> dtos = getEventsWithRatings(events).stream()
                     .map(EventMapper::toEventShortDto)
-                    .sorted(Comparator.comparingLong(EventShortDto::getViews).reversed())
+                    .sorted(Comparator.comparingDouble(EventShortDto::getRating).reversed())
                     .toList();
             log.debug("Получен список опубликованных событий {}", dtos);
             return getPage(dtos, from, size);
@@ -194,7 +196,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
             return List.of();
         }
 
-        List<EventShortDto> dtos = getEventsWithStats(events, statsClient).stream()
+        List<EventShortDto> dtos = getEventsWithRatings(events).stream()
                 .map(EventMapper::toEventShortDto)
                 .toList();
         log.debug("Получен список опубликованных событий {}", dtos);
@@ -202,12 +204,48 @@ public class EventServiceImpl extends ServiceBase implements EventService {
     }
 
     @Override
-    public EventDto getPublishedEvent(long eventId, String ip, String uri) {
+    public EventDto getPublishedEvent(long eventId, long userId) {
         log.trace("Инициировано получение опубликованного события с id {}", eventId);
-        saveHit(ip, uri);
         Event event = eventRepository.findByIdAndStatus(eventId, EventStatus.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException(Entities.EVENT, eventId));
-        return getEventsWithStats(List.of(event), statsClient).getFirst();
+        sendAction(userId, eventId, UserActionType.VIEW);
+        return getEventsWithRatings(List.of(event)).getFirst();
+    }
+
+    @Override
+    public List<EventShortDto> getRecommendations(long userId, int maxResults) {
+        List<Long> recommendedIds = analyzerClient.getRecommendationsForUser(userId, maxResults)
+                .map(RecommendedEvent::eventId)
+                .toList();
+
+        if (recommendedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Event> eventsById = eventRepository.findByIdIn(recommendedIds).stream()
+                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
+                .collect(Collectors.toMap(Event::getId, Function.identity()));
+        List<Event> orderedEvents = recommendedIds.stream()
+                .map(eventsById::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        return getEventsWithRatings(orderedEvents).stream()
+                .map(EventMapper::toEventShortDto)
+                .toList();
+    }
+
+    @Override
+    public void likeEvent(long eventId, long userId) {
+        eventRepository.findByIdAndStatus(eventId, EventStatus.PUBLISHED)
+                .orElseThrow(() -> new NotFoundException(Entities.EVENT, eventId));
+
+        boolean visited = requestClient.getRequestsByEvent(eventId).stream()
+                .anyMatch(request -> request.getRequester() == userId
+                        && request.getStatus() == RequestStatus.CONFIRMED);
+        if (!visited) {
+            throw new BadRequestException("User can like only an attended event");
+        }
+        sendAction(userId, eventId, UserActionType.LIKE);
     }
 
     @Override
@@ -234,7 +272,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
             return List.of();
         }
 
-        return getEventsWithStats(events, statsClient);
+        return getEventsWithRatings(events);
     }
 
     @Override
@@ -262,7 +300,7 @@ public class EventServiceImpl extends ServiceBase implements EventService {
         });
 
         log.debug("Обновлено событие {}", updatedEvent);
-        return getEventsWithStats(List.of(updatedEvent), statsClient).getFirst();
+        return getEventsWithRatings(List.of(updatedEvent)).getFirst();
     }
 
     private <T> List<T> getPage(List<T> source, int from, int size) {
@@ -274,17 +312,12 @@ public class EventServiceImpl extends ServiceBase implements EventService {
         return source.subList(from, toIndex);
     }
 
-    private void saveHit(String ip, String uri) {
-        try {
-            statsClient.addStatistics(EndpointHitRequest.builder()
-                    .app(EventServiceApplication.STATS_APP_NAME)
-                    .uri(uri)
-                    .ip(ip)
-                    .timestamp(LocalDateTime.now())
-                    .build());
-        } catch (RuntimeException exception) {
-            log.warn("Stats service is unavailable, hit is skipped: {}", exception.getMessage());
-        }
+    private List<EventDto> getEventsWithRatings(List<Event> events) {
+        return super.getEventsWithRatings(events, analyzerClient);
+    }
+
+    private void sendAction(long userId, long eventId, UserActionType actionType) {
+        collectorClient.collect(userId, eventId, actionType);
     }
 
     private void checkDateRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {

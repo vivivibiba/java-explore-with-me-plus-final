@@ -1,8 +1,8 @@
 package ru.practicum.explorewithme.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.practicum.explorewithme.StatsClient;
+import ru.practicum.explorewithme.AnalyzerClient;
+import ru.practicum.explorewithme.RecommendedEvent;
 import ru.practicum.explorewithme.dto.category.CategoryDto;
 import ru.practicum.explorewithme.dto.event.EventDto;
 import ru.practicum.explorewithme.dto.event.Location;
@@ -13,14 +13,11 @@ import ru.practicum.explorewithme.exception.NotFoundException;
 import ru.practicum.explorewithme.mapper.CategoryMapper;
 import ru.practicum.explorewithme.mapper.EventMapper;
 import ru.practicum.explorewithme.mapper.LocationMapper;
-import ru.practicum.explorewithme.stats.ViewStatsResponse;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-@Slf4j
 public class ServiceBase {
     protected <E> E findEntityIn(JpaRepository<E, Long> repository, long id, Entities entity) {
         return repository.findById(id).orElseThrow(() -> new NotFoundException(entity, id));
@@ -32,8 +29,12 @@ public class ServiceBase {
         }
     }
 
-    protected List<EventDto> getEventsWithStats(List<Event> events, StatsClient statsClient) {
-        Map<String, Long> viewsByUri = getStats(statsClient, events);
+    protected List<EventDto> getEventsWithRatings(List<Event> events, AnalyzerClient analyzerClient) {
+        if (events.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Double> ratings = getRatings(analyzerClient, events);
         return events.stream().map(event -> {
             CategoryDto category = CategoryMapper.toCategoryDto(event.getCategory());
             UserShortDto initiator = UserShortDto.builder()
@@ -45,27 +46,17 @@ public class ServiceBase {
             dto.setCategory(category);
             dto.setInitiator(initiator);
             dto.setLocation(location);
-            dto.setViews(viewsByUri.getOrDefault("/events/" + event.getId(), 0L));
+            dto.setRating(ratings.getOrDefault(event.getId(), 0.0));
             return dto;
         }).toList();
     }
 
-    private Map<String, Long> getStats(StatsClient statsClient, List<Event> events) {
-        Map<String, Long> result = new HashMap<>();
-        if (events.isEmpty()) {
-            return result;
-        }
-        try {
-            LocalDateTime start = events.stream()
-                    .map(Event::getCreatedOn)
-                    .min(LocalDateTime::compareTo)
-                    .orElse(LocalDateTime.now());
-            List<String> uris = events.stream().map(event -> "/events/" + event.getId()).toList();
-            List<ViewStatsResponse> stats = statsClient.getStatistics(start, LocalDateTime.now(), uris, true);
-            stats.forEach(stat -> result.put(stat.getUri(), stat.getHits()));
-        } catch (RuntimeException exception) {
-            log.warn("Stats service is unavailable, using zero views: {}", exception.getMessage());
-        }
-        return result;
+    private Map<Long, Double> getRatings(AnalyzerClient analyzerClient, List<Event> events) {
+        return analyzerClient.getInteractionsCount(events.stream().map(Event::getId).toList())
+                .collect(Collectors.toMap(
+                        RecommendedEvent::eventId,
+                        RecommendedEvent::score,
+                        (left, right) -> right
+                ));
     }
 }
