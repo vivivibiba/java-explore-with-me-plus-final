@@ -32,11 +32,13 @@ public interface EventService {
                                            boolean onlyAvailable,
                                            PublicEventSort sort,
                                            int from,
-                                           int size,
-                                           String ip,
-                                           String uri);
+                                           int size);
 
-    EventDto getPublishedEvent(long eventId, String ip, String uri);
+    EventDto getPublishedEvent(long eventId, long userId);
+
+    List<EventShortDto> getRecommendations(long userId, int maxResults);
+
+    void likeEvent(long eventId, long userId);
 
     List<EventDto> searchEvents(List<Long> users,
                                 List<String> states,

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.explorewithme.StatsClient;
+import ru.practicum.explorewithme.AnalyzerClient;
 import ru.practicum.explorewithme.dto.compilation.CompilationDto;
 import ru.practicum.explorewithme.dto.event.EventDto;
 import ru.practicum.explorewithme.dto.compilation.NewCompilationDto;
@@ -28,7 +28,7 @@ import java.util.List;
 public class CompilationsServiceImpl extends ServiceBase implements CompilationsService {
     private final EventRepository eventRepository;
     private final CompilationRepository compilationRepository;
-    private final StatsClient statsClient;
+    private final AnalyzerClient analyzerClient;
 
     @Override
     @Transactional
@@ -69,8 +69,8 @@ public class CompilationsServiceImpl extends ServiceBase implements Compilations
         if (events.isEmpty()) {
             return compilationDto;
         }
-        List<EventDto> eventWithStats = getEventsWithStats(events, statsClient);
-        List<EventShortDto> shortEvents = eventWithStats.stream()
+        List<EventDto> eventsWithRatings = getEventsWithRatings(events, analyzerClient);
+        List<EventShortDto> shortEvents = eventsWithRatings.stream()
                 .map(EventMapper::toEventShortDto)
                 .toList();
         compilationDto.setEvents(shortEvents);

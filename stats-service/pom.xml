@@ -15,12 +15,21 @@
         <module>client</module>
         <module>dto</module>
         <module>stats-server</module>
+        <module>avro-schemas</module>
+        <module>proto-schemas</module>
+        <module>collector</module>
+        <module>aggregator</module>
+        <module>analyzer</module>
     </modules>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <avro.version>1.11.4</avro.version>
+        <grpc.version>1.63.0</grpc.version>
+        <protobuf.version>3.25.3</protobuf.version>
+        <grpc.spring.version>3.1.0.RELEASE</grpc.spring.version>
     </properties>
 
 </project>

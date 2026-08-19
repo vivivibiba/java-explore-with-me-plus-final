@@ -1,6 +1,5 @@
 package ru.practicum.explorewithme.controller.pub;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +25,8 @@ import static ru.practicum.explorewithme.controller.ControllerConstants.*;
 @SuppressWarnings("unused")
 public class PublicEventController {
 
+    private static final String USER_ID_HEADER = "X-EWM-USER-ID";
+    private static final int RECOMMENDATIONS_LIMIT = 10;
     private final EventService eventService;
 
     @GetMapping
@@ -42,8 +43,7 @@ public class PublicEventController {
             @RequestParam(name = PARAM_FROM, required = false, defaultValue = "0")
             @PositiveOrZero int from,
             @RequestParam(name = PARAM_SIZE, required = false, defaultValue = "10")
-            @Positive int size,
-            HttpServletRequest request
+            @Positive int size
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(eventService.getPublishedEvents(
@@ -56,20 +56,28 @@ public class PublicEventController {
                         /// Вроде по дефолту можно строку прописать
                         sort == null ? PublicEventSort.EVENT_DATE : sort,
                         from,
-                        size,
-                        request.getRemoteAddr(),
-                        request.getRequestURI()
+                        size
                 ));
     }
 
     @GetMapping("/{" + ID_EVENT + "}")
     public ResponseEntity<EventDto> getEvent(@PathVariable(name = ID_EVENT) long eventId,
-                                             HttpServletRequest request) {
+                                             @RequestHeader(USER_ID_HEADER) long userId) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(eventService.getPublishedEvent(
-                        eventId,
-                        request.getRemoteAddr(),
-                        request.getRequestURI()
-                ));
+                .body(eventService.getPublishedEvent(eventId, userId));
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<EventShortDto>> getRecommendations(
+            @RequestHeader(USER_ID_HEADER) long userId) {
+        return ResponseEntity.ok(eventService.getRecommendations(userId, RECOMMENDATIONS_LIMIT));
+    }
+
+    @PutMapping("/{" + ID_EVENT + "}/like")
+    public ResponseEntity<Void> likeEvent(
+            @PathVariable(name = ID_EVENT) long eventId,
+            @RequestHeader(USER_ID_HEADER) long userId) {
+        eventService.likeEvent(eventId, userId);
+        return ResponseEntity.noContent().build();
     }
 }
